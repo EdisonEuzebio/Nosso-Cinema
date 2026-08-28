@@ -2,10 +2,7 @@
 
 Um catálogo e cronograma de filmes e séries para casais organizarem as sessões de fim de semana — com título vindos de todos os principais streamings (Netflix, Disney+, HBO Max, Prime Video e Apple TV+), cada um estilizado com a identidade visual da sua plataforma.
 
-![status](https://img.shields.io/badge/status-em%20uso-brightgreen)
-![stack](https://img.shields.io/badge/stack-HTML%20%7C%20CSS%20%7C%20JavaScript-1e1338)
-![licença](https://img.shields.io/badge/licença-MIT-e8637c)
-
+**Sendo feito especialmente para utilizar junto ao meu amor, Beatriz 💗🌸**
 ---
 
 ## 🎬 Sobre o projeto
@@ -32,31 +29,6 @@ Sabe aquele momento de indecisão pra escolher o que assistir no sábado à noit
 
 Projeto 100% front-end — um único arquivo `index.html`, sem necessidade de instalar dependências ou rodar servidor.
 
-## 🚀 Como usar
-
-1. Baixe ou clone este repositório.
-2. Abra o arquivo `index.html` no navegador — ou publique a pasta no GitHub Pages, Netlify, Vercel, etc.
-3. Pronto: adicione títulos ao catálogo, agende as sessões da semana e marquem juntos o que já assistiram.
-
-```bash
-git clone https://github.com/seu-usuario/noite-nossa.git
-cd noite-nossa
-# abra o index.html no navegador
-```
-
-### Publicando no GitHub Pages
-
-1. Vá em **Settings → Pages** no repositório.
-2. Em *Branch*, selecione `main` e a pasta `/root`.
-3. Salve — o site ficará disponível em `https://seu-usuario.github.io/noite-nossa/`.
-
-## 📂 Estrutura
-
-```
-noite-nossa/
-├── index.html   # aplicação completa (HTML + CSS + JS)
-└── README.md
-```
 
 
 

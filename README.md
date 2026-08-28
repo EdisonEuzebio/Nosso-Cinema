@@ -58,17 +58,6 @@ noite-nossa/
 └── README.md
 ```
 
-## 💡 Ideias futuras
 
-- [ ] Avaliação em estrelas/corações para cada sessão assistida
-- [ ] Exportar o cronograma da semana em imagem ou PDF
-- [ ] Sugestão automática de próximo episódio de séries em andamento
-- [ ] Modo "sorteio" para decidir o que assistir quando ninguém escolhe
-
-## 📜 Licença
-
-Distribuído sob a licença MIT. Sinta-se livre para adaptar para o seu próprio casal, família ou grupo de amigos.
-
----
 
 <p align="center">feito com ♥ para as noites de sábado</p>

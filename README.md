@@ -32,4 +32,4 @@ Projeto 100% front-end — um único arquivo `index.html`, sem necessidade de in
 
 
 
-<p align="center">feito com ♥ para as noites de sábado</p>
+<p align="center">feito com ♥ para as noites de cineminha</p>

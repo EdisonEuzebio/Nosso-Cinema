@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nosso Cinema</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" type="image/png" href="icons8-cinema-50.png">
+</head>
+<body>
+
+<div class="marquee">
+  <div class="bulbs"></div>
+  <h1>✦ Nosso Cinema ✦</h1>
+  <p>Nossos catálogos e memórias</p>
+  <div class="sub">Próxima sessão: <b id="nextSessionLabel">carregando…</b></div>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="catalogo">🎬 Catálogo</button>
+  <button class="tab-btn" data-tab="cronograma">🗓️ Cronograma</button>
+  <button class="tab-btn" data-tab="assistidos">🍿 Já vistos</button>
+</div>
+
+<div class="wrap">
+
+  <!-- ===================== CATALOGO ===================== -->
+  <div class="panel active" id="panel-catalogo">
+    <div class="section-title">
+      <h2>Catálogo de filmes &amp; séries</h2>
+      <span class="count" id="catalogCount"></span>
+    </div>
+    <div class="filters" id="platformFilters"></div>
+    <div class="filters">
+      <input class="searchbox" id="searchInput" type="text" placeholder="Buscar título…">
+      <div class="chip" data-typefilter="Filme">🎞️ Filmes</div>
+      <div class="chip" data-typefilter="Série">📺 Séries</div>
+    </div>
+    <div class="grid" id="catalogGrid"></div>
+
+    <div class="add-box">
+      <h3>➕ Adicionar título ao catálogo</h3>
+      <div class="form-row">
+        <input type="text" id="newTitle" placeholder="Nome do filme ou série">
+        <select id="newPlatform"></select>
+        <select id="newType">
+          <option value="Filme">Filme</option>
+          <option value="Série">Série</option>
+        </select>
+        <button class="btn btn-primary" id="addCatalogBtn">Adicionar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== CRONOGRAMA ===================== -->
+  <div class="panel" id="panel-cronograma">
+    <div class="section-title">
+      <h2>Cronograma da semana</h2>
+      <span class="count" id="schedCount"></span>
+    </div>
+
+    <div class="cal-wrap">
+      <div class="cal-head">
+        <button id="prevMonth">‹</button>
+        <span id="calLabel"></span>
+        <button id="nextMonth">›</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+
+    <div class="add-box">
+      <h3>➕ Agendar sessão para <span id="scheduleForDate">hoje</span></h3>
+      <div class="form-row">
+        <select id="schedCatalogSelect" style="flex:2;"></select>
+        <input type="date" id="schedDate">
+        <select id="schedStatus">
+          <option value="planejado">Planejado</option>
+          <option value="assistindo">Assistindo</option>
+          <option value="assistido">Assistido</option>
+        </select>
+        <button class="btn btn-primary" id="addSchedBtn">Agendar</button>
+      </div>
+    </div>
+
+    <div id="scheduleList" style="margin-top:22px;"></div>
+  </div>
+
+  <!-- ===================== ASSISTIDOS ===================== -->
+  <div class="panel" id="panel-assistidos">
+    <div class="section-title">
+      <h2>Já assistimos juntos</h2>
+      <span class="count" id="watchedCount"></span>
+    </div>
+    <div id="watchedList"></div>
+  </div>
+
+</div>
+
+<footer>feito com <b>♥</b> para as nossas noites de sábado</footer>
+
+<script>
+/* ============================================================
+   DADOS
+============================================================ */
+const PLATFORMS = {
+  netflix: { label:"Netflix",      color:"#E50914", soft:"rgba(229,9,20,.16)" },
+  disney:  { label:"Disney+",      color:"#1FA2FF", soft:"rgba(31,162,255,.16)" },
+  hbo:     { label:"HBO Max",      color:"#A06BE0", soft:"rgba(160,107,224,.18)" },
+  prime:   { label:"Prime Video",  color:"#00A8E1", soft:"rgba(0,168,225,.16)" },
+  apple:   { label:"Apple TV+",    color:"#FFFFFF", soft:"rgba(255,255,255,.10)" },
+};
+
+const SEED_CATALOG = [
+  // Disney+
+  {id:"hsm2", title:"High School Musical 2", platform:"disney", type:"Filme"},
+  {id:"hsm3", title:"High School Musical 3: Ano da Formatura", platform:"disney", type:"Filme"},
+  {id:"wandavision", title:"WandaVision", platform:"disney", type:"Série"},
+  {id:"loki", title:"Loki", platform:"disney", type:"Série"},
+  {id:"falcon", title:"Falcão e o Soldado Invernal", platform:"disney", type:"Série"},
+  {id:"hawkeye", title:"Gavião Arqueiro", platform:"disney", type:"Série"},
+  {id:"moonknight", title:"Cavaleiro da Lua", platform:"disney", type:"Série"},
+  {id:"shehulk", title:"Mulher-Hulk", platform:"disney", type:"Série"},
+  {id:"encanto", title:"Encanto", platform:"disney", type:"Filme"},
+  {id:"moana", title:"Moana", platform:"disney", type:"Filme"},
+  {id:"soul", title:"Soul", platform:"disney", type:"Filme"},
+  // Netflix
+  {id:"strangerthings", title:"Stranger Things", platform:"netflix", type:"Série"},
+  {id:"wednesday", title:"Wandinha", platform:"netflix", type:"Série"},
+  {id:"thecrown", title:"The Crown", platform:"netflix", type:"Série"},
+  {id:"dark", title:"Dark", platform:"netflix", type:"Série"},
+  {id:"casadepapel", title:"La Casa de Papel", platform:"netflix", type:"Série"},
+  {id:"gloriosownion", title:"Glass Onion", platform:"netflix", type:"Filme"},
+  {id:"extraction", title:"Resgate", platform:"netflix", type:"Filme"},
+  {id:"queensgambit", title:"O Gambito da Rainha", platform:"netflix", type:"Série"},
+  // HBO Max
+  {id:"succession", title:"Succession", platform:"hbo", type:"Série"},
+  {id:"lastofus", title:"The Last of Us", platform:"hbo", type:"Série"},
+  {id:"houseofdragon", title:"A Casa do Dragão", platform:"hbo", type:"Série"},
+  {id:"euphoria", title:"Euphoria", platform:"hbo", type:"Série"},
+  {id:"truedetective", title:"True Detective", platform:"hbo", type:"Série"},
+  {id:"dune", title:"Duna", platform:"hbo", type:"Filme"},
+  {id:"barbie", title:"Barbie", platform:"hbo", type:"Filme"},
+  // Prime Video
+  {id:"theboys", title:"The Boys", platform:"prime", type:"Série"},
+  {id:"maisel", title:"A Maravilhosa Sra. Maisel", platform:"prime", type:"Série"},
+  {id:"fallout", title:"Fallout", platform:"prime", type:"Série"},
+  {id:"reacher", title:"Reacher", platform:"prime", type:"Série"},
+  {id:"tomorrowwar", title:"A Guerra do Amanhã", platform:"prime", type:"Filme"},
+  // Apple TV+
+  {id:"tedlasso", title:"Ted Lasso", platform:"apple", type:"Série"},
+  {id:"severance", title:"Severance", platform:"apple", type:"Série"},
+  {id:"morningshow", title:"The Morning Show", platform:"apple", type:"Série"},
+  {id:"slowhorses", title:"Slow Horses", platform:"apple", type:"Série"},
+  {id:"coda", title:"CODA", platform:"apple", type:"Filme"},
+  {id:"killersflower", title:"Assassinos da Lua das Flores", platform:"apple", type:"Filme"},
+];
+
+function nextSaturdayISO(){
+  const d = new Date();
+  const day = d.getDay(); // 0=dom
+  const diff = (6 - day + 7) % 7;
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().slice(0,10);
+}
+const SAT = nextSaturdayISO();
+
+const SEED_SCHEDULE = [
+  {id:"s1", catalogId:"hsm2", date:SAT, status:"planejado"},
+  {id:"s2", catalogId:"hsm3", date:SAT, status:"planejado"},
+  {id:"s3", catalogId:"wandavision", date:SAT, status:"assistindo"},
+  {id:"s4", catalogId:"loki", date:SAT, status:"planejado"},
+];
+
+/* ============================================================
+   ESTADO + PERSISTENCIA (window.storage compartilhado do casal)
+============================================================ */
+let catalog = [];
+let schedule = [];
+let activePlatform = "all";
+let activeTypeFilter = null;
+let searchTerm = "";
+let calMonth = new Date();
+let selectedDay = null;
+
+async function loadData(){
+  try{
+    const c = await window.storage.get("catalog", true);
+    catalog = c ? JSON.parse(c.value) : SEED_CATALOG.slice();
+  }catch(e){ catalog = SEED_CATALOG.slice(); }
+  try{
+    const s = await window.storage.get("schedule", true);
+    schedule = s ? JSON.parse(s.value) : SEED_SCHEDULE.slice();
+  }catch(e){ schedule = SEED_SCHEDULE.slice(); }
+
+  if(!catalog.length) catalog = SEED_CATALOG.slice();
+  await saveCatalog();
+  await saveSchedule();
+  renderAll();
+}
+async function saveCatalog(){
+  try{ await window.storage.set("catalog", JSON.stringify(catalog), true); }catch(e){}
+}
+async function saveSchedule(){
+  try{ await window.storage.set("schedule", JSON.stringify(schedule), true); }catch(e){}
+}
+
+/* ============================================================
+   HELPERS
+============================================================ */
+function catalogItem(id){ return catalog.find(c=>c.id===id); }
+function fmtDay(iso){
+  const d = new Date(iso+"T12:00:00");
+  return { day:d.getDate(), mon:d.toLocaleDateString("pt-BR",{month:"short"}).replace(".",""), full:d };
+}
+function platformDot(p){ return `<span class="dot" style="background:${PLATFORMS[p].color}"></span>`; }
+
+/* ============================================================
+   TABS
+============================================================ */
+document.querySelectorAll(".tab-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("panel-"+btn.dataset.tab).classList.add("active");
+  });
+});
+
+/* ============================================================
+   RENDER: FILTROS DE PLATAFORMA
+============================================================ */
+function renderPlatformFilters(){
+  const box = document.getElementById("platformFilters");
+  let html = `<div class="chip ${activePlatform==='all'?'active':''}" data-platform="all" style="${activePlatform==='all'?'background:linear-gradient(100deg,var(--amber),var(--rose));border-color:transparent;':''}">Todos</div>`;
+  for(const key in PLATFORMS){
+    const p = PLATFORMS[key];
+    const isActive = activePlatform===key;
+    html += `<div class="chip ${isActive?'active':''}" data-platform="${key}"
+      style="${isActive?`background:${p.color};color:#0b0713;border-color:transparent;`:''}">
+      ${platformDot(key)} ${p.label}
+    </div>`;
+  }
+  box.innerHTML = html;
+  box.querySelectorAll("[data-platform]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      activePlatform = el.dataset.platform;
+      renderPlatformFilters();
+      renderCatalog();
+    });
+  });
+}
+
+document.querySelectorAll("[data-typefilter]").forEach(el=>{
+  el.addEventListener("click", ()=>{
+    const t = el.dataset.typefilter;
+    activeTypeFilter = activeTypeFilter===t ? null : t;
+    document.querySelectorAll("[data-typefilter]").forEach(c=>c.classList.remove("active"));
+    if(activeTypeFilter) el.classList.add("active");
+    renderCatalog();
+  });
+});
+document.getElementById("searchInput").addEventListener("input", e=>{
+  searchTerm = e.target.value.toLowerCase();
+  renderCatalog();
+});
+
+/* ============================================================
+   RENDER: GRID DO CATALOGO
+============================================================ */
+function renderCatalog(){
+  const grid = document.getElementById("catalogGrid");
+  let items = catalog.slice();
+  if(activePlatform!=="all") items = items.filter(i=>i.platform===activePlatform);
+  if(activeTypeFilter) items = items.filter(i=>i.type===activeTypeFilter);
+  if(searchTerm) items = items.filter(i=>i.title.toLowerCase().includes(searchTerm));
+
+  document.getElementById("catalogCount").textContent = `${items.length} título(s)`;
+
+  if(!items.length){
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="big">🎥</div>Nenhum título encontrado.</div>`;
+    return;
+  }
+
+  grid.innerHTML = items.map(i=>{
+    const p = PLATFORMS[i.platform];
+    return `<div class="card">
+      <div class="accent" style="background:${p.color}"></div>
+      <div class="platform-badge" style="background:${p.soft};color:${p.color==='#FFFFFF'?'#fff':p.color};border:1px solid ${p.color}55;">${p.label}</div>
+      <h3>${i.title}</h3>
+      <div class="meta">${i.type==='Filme'?'🎞️ Filme':'📺 Série'}</div>
+      <div class="actions">
+        <button class="btn btn-primary" data-add="${i.id}">+ Agendar</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  grid.querySelectorAll("[data-add]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      document.querySelector('.tab-btn[data-tab="cronograma"]').click();
+      document.getElementById("schedCatalogSelect").value = btn.dataset.add;
+      document.getElementById("schedDate").focus();
+    });
+  });
+}
+
+/* ============================================================
+   FORM: ADICIONAR AO CATALOGO
+============================================================ */
+function populatePlatformSelect(sel){
+  sel.innerHTML = Object.keys(PLATFORMS).map(k=>`<option value="${k}">${PLATFORMS[k].label}</option>`).join("");
+}
+populatePlatformSelect(document.getElementById("newPlatform"));
+
+document.getElementById("addCatalogBtn").addEventListener("click", async ()=>{
+  const title = document.getElementById("newTitle").value.trim();
+  const platform = document.getElementById("newPlatform").value;
+  const type = document.getElementById("newType").value;
+  if(!title) return;
+  const id = "c_"+Date.now();
+  catalog.push({id, title, platform, type});
+  document.getElementById("newTitle").value = "";
+  await saveCatalog();
+  renderCatalog();
+  populateSchedSelect();
+});
+
+/* ============================================================
+   CALENDARIO
+============================================================ */
+function renderCalendar(){
+  const label = document.getElementById("calLabel");
+  label.textContent = calMonth.toLocaleDateString("pt-BR",{month:"long", year:"numeric"});
+
+  const grid = document.getElementById("calGrid");
+  const dows = ["dom","seg","ter","qua","qui","sex","sáb"];
+  let html = dows.map(d=>`<div class="cal-dow">${d}</div>`).join("");
+
+  const year = calMonth.getFullYear(), month = calMonth.getMonth();
+  const firstDow = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const todayISO = new Date().toISOString().slice(0,10);
+
+  for(let i=0;i<firstDow;i++) html += `<div class="cal-day empty"></div>`;
+
+  for(let d=1; d<=daysInMonth; d++){
+    const iso = `${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    const dayItems = schedule.filter(s=>s.date===iso);
+    const platformsToday = [...new Set(dayItems.map(s=>{
+      const it = s.catalogId ? catalogItem(s.catalogId) : s;
+      return it ? it.platform : null;
+    }).filter(Boolean))];
+    let cls = "cal-day";
+    if(iso===todayISO) cls += " today";
+    if(iso===selectedDay) cls += " selected";
+    html += `<div class="${cls}" data-date="${iso}">
+      <div>${d}</div>
+      <div class="dots">${platformsToday.map(p=>`<span style="background:${PLATFORMS[p].color}"></span>`).join("")}</div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+  grid.querySelectorAll("[data-date]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      selectedDay = el.dataset.date;
+      document.getElementById("schedDate").value = selectedDay;
+      document.getElementById("scheduleForDate").textContent = fmtNice(selectedDay);
+      renderCalendar();
+      renderScheduleList();
+    });
+  });
+}
+function fmtNice(iso){
+  const d = new Date(iso+"T12:00:00");
+  return d.toLocaleDateString("pt-BR",{weekday:"long", day:"2-digit", month:"long"});
+}
+document.getElementById("prevMonth").addEventListener("click", ()=>{
+  calMonth.setMonth(calMonth.getMonth()-1); renderCalendar();
+});
+document.getElementById("nextMonth").addEventListener("click", ()=>{
+  calMonth.setMonth(calMonth.getMonth()+1); renderCalendar();
+});
+
+/* ============================================================
+   FORM: AGENDAR
+============================================================ */
+function populateSchedSelect(){
+  const sel = document.getElementById("schedCatalogSelect");
+  sel.innerHTML = catalog
+    .slice()
+    .sort((a,b)=>a.title.localeCompare(b.title))
+    .map(c=>`<option value="${c.id}">${PLATFORMS[c.platform].label} — ${c.title}</option>`).join("");
+}
+document.getElementById("schedDate").value = SAT;
+document.getElementById("scheduleForDate").textContent = fmtNice(SAT);
+selectedDay = SAT;
+
+document.getElementById("addSchedBtn").addEventListener("click", async ()=>{
+  const catalogId = document.getElementById("schedCatalogSelect").value;
+  const date = document.getElementById("schedDate").value || SAT;
+  const status = document.getElementById("schedStatus").value;
+  if(!catalogId || !date) return;
+  schedule.push({id:"s_"+Date.now(), catalogId, date, status});
+  await saveSchedule();
+  selectedDay = date;
+  renderAll();
+});
+
+/* ============================================================
+   LISTA DO CRONOGRAMA (agrupada, estilo ticket)
+============================================================ */
+function renderScheduleList(){
+  const box = document.getElementById("scheduleList");
+  let items = schedule.filter(s=>s.status!=="assistido");
+  if(selectedDay) items = items.filter(s=>s.date===selectedDay);
+  items.sort((a,b)=> a.date.localeCompare(b.date));
+
+  document.getElementById("schedCount").textContent = `${schedule.filter(s=>s.status!=="assistido").length} pendente(s)`;
+
+  if(!items.length){
+    box.innerHTML = `<div class="empty-state"><div class="big">🍿</div>Nada agendado ${selectedDay? 'para '+fmtNice(selectedDay):''}. Escolha um título do catálogo!</div>`;
+    return;
+  }
+
+  box.innerHTML = items.map(s=>ticketHTML(s)).join("");
+  bindTicketActions(box);
+}
+
+function ticketHTML(s){
+  const it = catalogItem(s.catalogId);
+  if(!it) return "";
+  const p = PLATFORMS[it.platform];
+  const {day, mon} = fmtDay(s.date);
+  return `<div class="ticket" style="border-left:4px solid ${p.color}">
+    <div class="stub">
+      <div class="day">${day}</div>
+      <div class="mon">${mon}</div>
+    </div>
+    <div class="body">
+      <h4>${it.title}</h4>
+      <div class="row2">
+        <span class="platform-badge" style="background:${p.soft};color:${p.color==='#FFFFFF'?'#fff':p.color};border:1px solid ${p.color}55;">${p.label}</span>
+        <span class="status-badge status-${s.status}">${s.status==='planejado'?'Planejado':s.status==='assistindo'?'Assistindo':'Assistido'}</span>
+      </div>
+    </div>
+    <div class="side-actions">
+      ${s.status!=='assistido' ? `<button class="icon-btn" data-watched="${s.id}">✔ Visto</button>`:''}
+      ${s.status==='planejado' ? `<button class="icon-btn" data-watching="${s.id}">▶ Assistindo</button>`:''}
+      <button class="icon-btn" data-remove="${s.id}">✕ Remover</button>
+    </div>
+  </div>`;
+}
+
+function bindTicketActions(box){
+  box.querySelectorAll("[data-watched]").forEach(b=>b.addEventListener("click", async ()=>{
+    const s = schedule.find(x=>x.id===b.dataset.watched);
+    if(s){ s.status="assistido"; s.watchedOn = new Date().toISOString().slice(0,10); await saveSchedule(); renderAll(); }
+  }));
+  box.querySelectorAll("[data-watching]").forEach(b=>b.addEventListener("click", async ()=>{
+    const s = schedule.find(x=>x.id===b.dataset.watching);
+    if(s){ s.status="assistindo"; await saveSchedule(); renderAll(); }
+  }));
+  box.querySelectorAll("[data-remove]").forEach(b=>b.addEventListener("click", async ()=>{
+    schedule = schedule.filter(x=>x.id!==b.dataset.remove);
+    await saveSchedule(); renderAll();
+  }));
+}
+
+/* ============================================================
+   ASSISTIDOS
+============================================================ */
+function renderWatched(){
+  const box = document.getElementById("watchedList");
+  let items = schedule.filter(s=>s.status==="assistido");
+  items.sort((a,b)=> (b.watchedOn||b.date).localeCompare(a.watchedOn||a.date));
+  document.getElementById("watchedCount").textContent = `${items.length} assistido(s)`;
+
+  if(!items.length){
+    box.innerHTML = `<div class="empty-state"><div class="big">🎞️</div>Ainda não marcaram nada como assistido.</div>`;
+    return;
+  }
+  box.innerHTML = items.map(s=>{
+    const it = catalogItem(s.catalogId);
+    if(!it) return "";
+    const p = PLATFORMS[it.platform];
+    return `<div class="ticket" style="border-left:4px solid ${p.color}; opacity:.85;">
+      <div class="stub"><div class="day">✔</div><div class="mon">visto</div></div>
+      <div class="body">
+        <h4>${it.title}</h4>
+        <div class="row2">
+          <span class="platform-badge" style="background:${p.soft};color:${p.color==='#FFFFFF'?'#fff':p.color};border:1px solid ${p.color}55;">${p.label}</span>
+          <span style="font-size:12px;color:var(--muted);">assistido em ${fmtNice(s.watchedOn||s.date)}</span>
+        </div>
+      </div>
+      <div class="side-actions">
+        <button class="icon-btn" data-remove2="${s.id}">✕ Remover</button>
+      </div>
+    </div>`;
+  }).join("");
+  box.querySelectorAll("[data-remove2]").forEach(b=>b.addEventListener("click", async ()=>{
+    schedule = schedule.filter(x=>x.id!==b.dataset.remove2);
+    await saveSchedule(); renderAll();
+  }));
+}
+
+/* ============================================================
+   HEADER: PROXIMA SESSAO
+============================================================ */
+function renderNextSession(){
+  const pend = schedule.filter(s=>s.status!=="assistido").sort((a,b)=>a.date.localeCompare(b.date));
+  const label = document.getElementById("nextSessionLabel");
+  if(!pend.length){ label.textContent = "nada agendado ainda"; return; }
+  const date = pend[0].date;
+  const titles = pend.filter(s=>s.date===date).map(s=>catalogItem(s.catalogId)?.title).filter(Boolean);
+  label.textContent = `${fmtNice(date)} — ${titles.join(", ")}`;
+}
+
+/* ============================================================
+   RENDER ALL
+============================================================ */
+function renderAll(){
+  renderPlatformFilters();
+  renderCatalog();
+  populateSchedSelect();
+  renderCalendar();
+  renderScheduleList();
+  renderWatched();
+  renderNextSession();
+}
+
+loadData();
+</script>
+</body>
+</html>
